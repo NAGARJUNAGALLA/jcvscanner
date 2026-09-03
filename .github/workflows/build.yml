@@ -1,9 +1,9 @@
-name: Build Android WebView App
+name: Build Native Android WebView App
 
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: # Allows manual trigger from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build:
@@ -19,57 +19,23 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: Install Cordova
-        run: npm install -g cordova
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+        continue-on-error: true # Ignores if gradlew doesn't exist yet
 
-      - name: Initialize Cordova Project
+      - name: Build APK using Gradle
         run: |
-          # Create the project with the specified package name
-          cordova create app com.jcv.scanner "JCVScanner"
-          
-          # Clear the default Cordova boilerplate
-          rm -rf app/www/*
-          
-          # Copy the provided HTML file as the app's entry point
-          cp jcvscanner.html app/www/index.html
-          
-          # Add permissions for camera and storage required by the scanner
-          cat <<EOF > app/config.xml
-          <?xml version='1.0' encoding='utf-8'?>
-          <widget id="com.jcv.scanner" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-              <name>JCV Scanner</name>
-              <description>ClearScanner Pro Ultimate Wrapper</description>
-              <author email="dev@example.com" href="http://example.com">JCV Dev</author>
-              <content src="index.html" />
-              <access origin="*" />
-              <allow-intent href="http://*/*" />
-              <allow-intent href="https://*/*" />
-              <preference name="AndroidInsecureFileModeEnabled" value="true" />
-              <platform name="android">
-                  <preference name="android-minSdkVersion" value="24" />
-                  <preference name="android-targetSdkVersion" value="33" />
-                  <config-file target="AndroidManifest.xml" parent="/*">
-                      <uses-permission android:name="android.permission.CAMERA" />
-                      <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-                      <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-                  </config-file>
-              </platform>
-          </widget>
-          EOF
-
-      - name: Add Android Platform and Build APK
-        working-directory: ./app
-        run: |
-          cordova platform add android
-          cordova build android
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleDebug
+          else
+            gradle assembleDebug
+          fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: jcv-scanner-apk
-          path: app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
