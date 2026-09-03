@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Required for downloading OpenCV, PDF.js, and Tesseract.js CDNs -->
+    <!-- Required Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
-    
-    <!-- Required for the in-app camera scanner -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera.any" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:allowBackup="true"
         android:label="JCV Scanner"
+        android:icon="@android:drawable/sym_def_app_icon"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
         android:hardwareAccelerated="true">
         
         <activity
-            android:name=".MainActivity"
+            android:name="com.jcv.scanner.MainActivity"
             android:exported="true"
+            android:theme="@android:style/Theme.NoTitleBar"
             android:configChanges="orientation|screenSize|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
