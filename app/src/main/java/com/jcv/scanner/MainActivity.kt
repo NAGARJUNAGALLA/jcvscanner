@@ -1,60 +1,72 @@
-package com.jcv.scanner
+package com.jcv.scanner;
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.pm.PackageManager
-import android.os.Bundle
-import android.webkit.PermissionRequest
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
-class MainActivity : Activity() {
+public class MainActivity extends Activity {
 
-    private lateinit var webView: WebView
-    private val CAMERA_PERMISSION_CODE = 100
+    private WebView webView;
+    private static final int CAMERA_PERMISSION_CODE = 100;
 
     @SuppressLint("SetJavaScriptEnabled")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
         // Initialize WebView programmatically
-        webView = WebView(this)
-        setContentView(webView)
+        webView = new WebView(this);
+        setContentView(webView);
 
         // Request native Android Camera Permission (API 23+ standard implementation)
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_CODE)
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_CODE);
         }
 
         // Configure WebView Settings
-        val settings: WebSettings = webView.settings
-        settings.javaScriptEnabled = true
-        settings.domStorageEnabled = true 
-        settings.databaseEnabled = true
-        settings.allowFileAccess = true
-        settings.allowFileAccessFromFileURLs = true
-        settings.allowUniversalAccessFromFileURLs = true
-        settings.mediaPlaybackRequiresUserGesture = false
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
 
-        webView.webViewClient = WebViewClient()
+        webView.setWebViewClient(new WebViewClient());
         
         // Handle HTML5 permissions (Camera for WebRTC stream)
-        webView.webChromeClient = object : WebChromeClient() {
-            override fun onPermissionRequest(request: PermissionRequest) {
-                runOnUiThread {
-                    if (request.resources.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
-                        request.grant(request.resources)
-                    } else {
-                        request.deny()
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        boolean hasVideo = false;
+                        for (String resource : request.getResources()) {
+                            if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) {
+                                hasVideo = true;
+                                break;
+                            }
+                        }
+                        if (hasVideo) {
+                            request.grant(request.getResources());
+                        } else {
+                            request.deny();
+                        }
                     }
-                }
+                });
             }
-        }
+        });
 
         // Load the HTML file verbatim from the assets folder
-        webView.loadUrl("file:///android_asset/jcvscanner.html")
+        webView.loadUrl("file:///android_asset/jcvscanner.html");
     }
 }
